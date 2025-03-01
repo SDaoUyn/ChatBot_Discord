@@ -10,7 +10,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var Token string = "Your-token"
+var Token string = "MTM0NDkyNDM5MTY3MDAyMjE1NA.Gg7Qyg.mFitoBXx9OZn53gFKkkc1IqPuZFM_gF5PZYoGo"
 
 func main() {
 	// Tạo một session Discord mới
