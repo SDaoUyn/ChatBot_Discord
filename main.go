@@ -10,8 +10,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Token của bot Discord của bạn
-var Token string = "MTM0NDkyNDM5MTY3MDAyMjE1NA.GS8Eme.LJkJHMk38LTjP5BapHDP3q2gb_paVWsrXtXTJ4"
+var Token string = "Your-token"
 
 func main() {
 	// Tạo một session Discord mới
@@ -42,7 +41,6 @@ func main() {
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
 
-	// Đóng kết nối
 	dg.Close()
 }
 
@@ -53,17 +51,12 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	// Xử lý lệnh !ping
 	if strings.HasPrefix(m.Content, "!ping") {
 		s.ChannelMessageSend(m.ChannelID, "Pong!")
 	}
 
-	// Xử lý lệnh !hello
 	if strings.HasPrefix(m.Content, "!hello") {
 		s.ChannelMessageSend(m.ChannelID, "Xin chào, "+m.Author.Username+"!")
 	}
 
-	if strings.HasPrefix(m.Content, "!Bảo có đẹp trai không") {
-		s.ChannelMessageSend(m.ChannelID, "Có con cek, xấu như chó "+"!!!!!!")
-	}
 }
