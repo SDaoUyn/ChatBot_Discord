@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ChatBotDiscord/common"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,7 +11,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var Token string = "MTM0NDkyNDM5MTY3MDAyMjE1NA.Gg7Qyg.mFitoBXx9OZn53gFKkkc1IqPuZFM_gF5PZYoGo"
+// Token Bot Discord của bạn
+var Token string = "YOUR_TOKEN"
 
 func main() {
 	// Tạo một session Discord mới
@@ -59,4 +61,54 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSend(m.ChannelID, "Xin chào, "+m.Author.Username+"!")
 	}
 
+	// Thêm chức năng tìm kiếm Google
+	if strings.HasPrefix(m.Content, "!search ") {
+		// Lấy từ khóa tìm kiếm từ lệnh
+		query := strings.TrimPrefix(m.Content, "!search ")
+
+		if query != "" {
+			// Gửi tin nhắn thông báo đang tìm kiếm
+			s.ChannelMessageSend(m.ChannelID, "Đang tìm kiếm thông tin về: "+query)
+
+			// Thực hiện tìm kiếm và trả về kết quả
+			results, err := common.SearchGoogle(query)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Có lỗi khi tìm kiếm: "+err.Error())
+				return
+			}
+
+			// Gửi kết quả tìm kiếm
+			s.ChannelMessageSend(m.ChannelID, results)
+		} else {
+			s.ChannelMessageSend(m.ChannelID, "Vui lòng nhập từ khóa để tìm kiếm. Ví dụ: !search Việt Nam")
+		}
+	}
+
+	// Chức năng AI chat
+	if strings.HasPrefix(m.Content, "!ask ") {
+		// Lấy câu hỏi từ lệnh
+		question := strings.TrimPrefix(m.Content, "!ask ")
+
+		if question != "" {
+			// Hiển thị bot đang suy nghĩ
+			s.ChannelMessageSend(m.ChannelID, "Đang phản hồi...")
+
+			var answer string
+			var err error
+
+			answer, err = common.AskGemini(question)
+
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Có lỗi khi truy vấn AI: %s", err.Error()))
+				return
+			}
+
+			// Gửi câu trả lời từ AI
+			s.ChannelMessageSend(m.ChannelID, answer)
+		} else {
+			s.ChannelMessageSend(m.ChannelID, "Vui lòng nhập câu hỏi. Ví dụ: !ask Thủ đô của Việt Nam là gì?")
+		}
+	}
 }
+
+// Hàm gọi API Google Gemini
