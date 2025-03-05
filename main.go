@@ -3,6 +3,9 @@ package main
 import (
 	"ChatBotDiscord/common"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -84,31 +87,84 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	// Chức năng AI chat
+	// Chức năng AI chat kết hợp văn bản và hình ảnh
 	if strings.HasPrefix(m.Content, "!ask ") {
-		// Lấy câu hỏi từ lệnh
+		// Tách phần câu hỏi
 		question := strings.TrimPrefix(m.Content, "!ask ")
 
-		if question != "" {
+		// Kiểm tra có hình ảnh không
+		if len(m.Attachments) > 0 {
 			// Hiển thị bot đang suy nghĩ
-			s.ChannelMessageSend(m.ChannelID, "Đang phản hồi...")
+			s.ChannelMessageSend(m.ChannelID, "Đang xử lý hình ảnh và câu hỏi...")
 
+			// Mảng lưu đường dẫn file tạm
+			tmpImagePaths := []string{}
+			defer func() {
+				// Xóa các file tạm sau khi sử dụng
+				for _, path := range tmpImagePaths {
+					os.Remove(path)
+				}
+			}()
+
+			// Tải và lưu các hình ảnh
+			for _, attachment := range m.Attachments {
+				// Tải hình ảnh
+				resp, err := http.Get(attachment.URL)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Lỗi tải hình ảnh: "+err.Error())
+					return
+				}
+				defer resp.Body.Close()
+
+				// Tạo file tạm
+				tmpFile, err := ioutil.TempFile("", "discord-image-*.jpg")
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Lỗi tạo file tạm: "+err.Error())
+					return
+				}
+
+				// Sao chép nội dung hình ảnh
+				_, err = io.Copy(tmpFile, resp.Body)
+				tmpFile.Close()
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Lỗi lưu hình ảnh: "+err.Error())
+					return
+				}
+
+				// Lưu đường dẫn file tạm
+				tmpImagePaths = append(tmpImagePaths, tmpFile.Name())
+			}
+
+			// Nếu có nhiều hình ảnh
 			var answer string
 			var err error
+			if len(tmpImagePaths) > 1 {
+				answer, err = common.AskGeminiMultipleImages(question, tmpImagePaths)
+			} else {
+				// Nếu chỉ có một hình ảnh
+				answer, err = common.AskGeminiWithImage(question, tmpImagePaths[0])
+			}
 
-			answer, err = common.AskGemini(question)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Có lỗi khi xử lý: %s", err.Error()))
+				return
+			}
 
+			// Gửi kết quả
+			s.ChannelMessageSend(m.ChannelID, answer)
+
+		} else {
+			// Nếu không có hình ảnh, sử dụng chat text thông thường
+			s.ChannelMessageSend(m.ChannelID, "Đang suy nghĩ...")
+
+			answer, err := common.AskGemini(question)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Có lỗi khi truy vấn AI: %s", err.Error()))
 				return
 			}
 
-			// Gửi câu trả lời từ AI
 			s.ChannelMessageSend(m.ChannelID, answer)
-		} else {
-			s.ChannelMessageSend(m.ChannelID, "Vui lòng nhập câu hỏi. Ví dụ: !ask Thủ đô của Việt Nam là gì?")
 		}
 	}
-}
 
-// Hàm gọi API Google Gemini
+}
