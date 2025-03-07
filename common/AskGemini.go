@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-var GeminiKey string = "YOUR_GEMINI_API_KEY"
+var GeminiKey string = "YOUR_GEMINI_KEY"
 
 func AskGemini(question string) (string, error) {
 	// Tạo client với API key
