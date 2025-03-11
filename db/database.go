@@ -3,10 +3,12 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -14,6 +16,14 @@ var (
 	PgPool      *pgxpool.Pool
 	ctx         = context.TODO()
 )
+
+// LoadEnv tải biến môi trường từ file .env
+func LoadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("Warning: Không thể tải file .env:", err)
+	}
+}
 
 // getEnv lấy giá trị từ biến môi trường hoặc trả về giá trị mặc định
 func getEnv(key, defaultValue string) string {
@@ -26,8 +36,11 @@ func getEnv(key, defaultValue string) string {
 
 // InitDB khởi tạo kết nối đến Redis và PostgreSQL
 func InitDB() error {
+	// Tải biến môi trường từ file .env
+	LoadEnv()
+
 	// Lấy thông tin kết nối Redis từ biến môi trường
-	redisHost := getEnv("REDIS_HOST", "new_redis")
+	redisHost := getEnv("REDIS_HOST", "my_redis")
 	redisPort := getEnv("REDIS_PORT", "6379")
 	redisAddr := fmt.Sprintf("%s:%s", redisHost, redisPort)
 
@@ -49,7 +62,7 @@ func InitDB() error {
 	pgPort := getEnv("POSTGRES_PORT", "5432")
 	pgUser := getEnv("POSTGRES_USER", "admin")
 	pgPassword := getEnv("POSTGRES_PASSWORD", "123456")
-	pgDB := getEnv("POSTGRES_DB", "Subscriber")
+	pgDB := getEnv("POSTGRES_DB", "mydb")
 
 	// Tạo connection string
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", pgUser, pgPassword, pgHost, pgPort, pgDB)

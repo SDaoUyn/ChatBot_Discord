@@ -6,10 +6,20 @@ import (
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
-var GeminiKey string = "YOUR_GEMINI_KEY"
+var GeminiKey string = getEnv("GEMINI_KEY", "")
+
+// getEnv lấy giá trị từ biến môi trường hoặc trả về giá trị mặc định
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
 
 func AskGemini(question string) (string, error) {
 	// Tạo client với API key

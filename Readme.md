@@ -5,78 +5,27 @@ Một Discord bot đơn giản được viết bằng Golang với các chức n
 ## Dành cho Developers
 
 ### Bước 1: Chuẩn bị
+- Clone repository
 - Đăng ký tài khoản [Discord Developer](https://discord.com/developers/applications) và tạo một bot mới
-- Lấy token của bot
-- Cài đặt [Golang](https://golang.org/dl/) trên máy tính của bạn
-- Cài đặt cơ sở dữ liệu PostgreSQL
-- Cài đặt Redis để hỗ trợ lưu trữ tạm thời
+- Cài đặt [Golang](https://golang.org/dl/) trên máy tính của bạn (nếu cần)
+- Cài đặt Docker
+- Lấy token của botChat Discord
 - Tạo tài khoản và lấy API key từ [SerpAPI](https://serpapi.com/) cho chức năng tìm kiếm Google
 - Tạo tài khoản và lấy API key từ [Google AI Studio](https://aistudio.google.com/) cho chức năng AI Gemini
 
-### Bước 2: Cài đặt thư viện nếu chưa có
-Cài đặt các thư viện cần thiết bằng các lệnh:
+### Bước 2: Cài đặt thư viện (Nếu Cần thiết)
+Các thư viện mặc định đã có sãn nếu chưa có hãy cài đặt các thư viện cần thiết bằng lệnh:
 ```bash
 go get github.com/bwmarrin/discordgo
 go get github.com/google/generative-ai-go
 go get github.com/tidwall/gjson
 go get github.com/go-redis/redis/v8
 go get github.com/jackc/pgx/v5/pgxpool
+go get github.com/joho/godotenv
 ```
 
-### Bước 3: Cấu hình cơ sở dữ liệu
-#### Cấu hình PostgreSQL
-1. Cài đặt PostgreSQL theo hướng dẫn trên [trang chủ](https://www.postgresql.org/download/)
-2. Tạo cơ sở dữ liệu mới:
-```sql
-CREATE TABLE subscribers (
-   id SERIAL PRIMARY KEY,
-   discord_user_id BIGINT NOT NULL UNIQUE,
-   subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-   is_active BOOLEAN DEFAULT TRUE,
-   is_Admin BOOLEAN DEFAULT FALSE
-);
-
-CREATE OR REPLACE FUNCTION update_timestamp_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER set_timestamp
-  BEFORE UPDATE ON subscribers
-  FOR EACH ROW
-  EXECUTE FUNCTION update_timestamp_column();
-
-CREATE TRIGGER set_timestamp_before_insert
-  BEFORE UPDATE ON subscribers
-  FOR EACH ROW
-  EXECUTE FUNCTION update_timestamp_column();
-```
-3. Cấu hình kết nối trực tiếp trong mã nguồn (`db/database.go`):
-```go
-connStr := "postgres://{username}:{password}@localhost:5432/{tableName}"
-```
-
-#### Cấu hình Redis
-1. Cài đặt Redis theo hướng dẫn trên [trang chủ](https://redis.io/docs/getting-started/installation/)
-2. Chạy Redis Server:
-```bash
-redis-server
-```
-3. Cấu hình kết nối trực tiếp trong mã nguồn (`db/database.go`):
-```go
-RedisClient = redis.NewClient(&redis.Options{
-    Addr:     "localhost:6379",
-    Password: "", // Không có mật khẩu
-    DB:       0,
-})
-```
-
-### Bước 4: Đăng ký bot với server Discord
-- Vào trang [Discord Developer Portal](https://discord.com/developers/applications)
+### Bước 3: Đăng ký bot với Discord Server
+- Truy cập [Discord Developer Portal](https://discord.com/developers/applications)
 - Chọn ứng dụng bot của bạn
 - Vào mục "Bot" để lấy token (thay thế "Token" trong `main.go`)
 - Vào mục "OAuth2" > "URL Generator":
@@ -84,16 +33,13 @@ RedisClient = redis.NewClient(&redis.Options{
   - Chọn bot permissions: Send Messages, Read Message History, Manage Messages, Use Slash Commands
   - Sử dụng URL được tạo để thêm bot vào server Discord
 
-### Bước 5: Cấu hình bot
-- Mở file `main.go` và thay thế "Token" bằng token bot Discord của bạn
-- Mở file `common/search.go` và thay thế "SerpAPIKey" bằng API key của bạn từ [SerpAPI](https://serpapi.com/)
-- Mở file `common/gemini.go` và thay thế "GeminiKey" bằng API key của bạn từ [Google AI Studio](https://aistudio.google.com/)
-- Đảm bảo thông tin kết nối cơ sở dữ liệu và Redis đúng như trong mã nguồn `db/init.go`
+### Bước 4: Cấu hình bot
+- Tạo và cấu hình lại file `.env`, dựa vào file `.env.example`.
 
-### Bước 6: Chạy bot
-Chạy mã nguồn bằng lệnh:
+### Bước 5: Chạy Docker
+Sử dụng Terminal để chạy docker và khởi tạo PostgreSQL và Redis:
 ```bash
-go run main.go
+docker-compose up -d
 ```
 
 ## Dành cho Users
@@ -103,35 +49,31 @@ go run main.go
 2. Đảm bảo bot có quyền đọc và gửi tin nhắn trong kênh bạn muốn sử dụng
 
 ### Các lệnh cơ bản
-
-| Lệnh                | Mô tả                                               |
+| Lệnh | Mô tả |
 |---------------------|-----------------------------------------------------|
-| `!ping`             | Bot sẽ phản hồi "Pong!"                             |
-| `!hello`            | Bot sẽ chào bạn với tên người dùng của bạn          |
-| `!search [từ khóa]` | Bot sẽ tìm kiếm Google và trả về kết quả tìm kiếm   |
+| `!ping` | Bot sẽ phản hồi "Pong!" |
+| `!hello` | Bot sẽ chào bạn với tên người dùng của bạn |
+| `!search [từ khóa]` | Bot sẽ tìm kiếm Google và trả về kết quả tìm kiếm |
 
 ### Lệnh tích hợp AI
-
-| Lệnh                      | Mô tả                                                       |
+| Lệnh | Mô tả |
 |---------------------------|-------------------------------------------------------------|
-| `!ask [câu hỏi]`          | Gửi câu hỏi cho AI Gemini và nhận câu trả lời               |
-| `!ask [câu hỏi]` + hình   | Gửi câu hỏi và hình ảnh để AI Gemini phân tích và trả lời   |
+| `!ask [câu hỏi]` | Gửi câu hỏi cho AI Gemini và nhận câu trả lời |
+| `!ask [câu hỏi]` + hình | Gửi câu hỏi và hình ảnh để AI Gemini phân tích và trả lời |
 
 ### Lệnh đăng ký và thông báo
-
-| Lệnh                       | Mô tả                                                  |
+| Lệnh | Mô tả |
 |----------------------------|--------------------------------------------------------|
-| `!subscribe`               | Đăng ký nhận thông báo từ bot                          |
-| `!unsubscribe`             | Hủy đăng ký nhận thông báo từ bot                      |
-| `!notify [nội dung]`       | Gửi thông báo đến tất cả người đã đăng ký (chỉ Admin)  |
-| `!dm [nội dung]`           | Gửi tin nhắn trực tiếp đến tất cả người đăng ký (chỉ Admin) |
+| `!subscribe` | Đăng ký nhận thông báo từ bot |
+| `!unsubscribe` | Hủy đăng ký nhận thông báo từ bot |
+| `!notify [nội dung]` | Gửi thông báo đến tất cả người đã đăng ký (chỉ Admin) |
+| `!dm [nội dung]` | Gửi tin nhắn trực tiếp đến tất cả người đăng ký (chỉ Admin) |
 
 ### Lệnh quản trị viên
-
-| Lệnh                     | Mô tả                                                         |
-|--------------------------|---------------------------------------------------------------|
-| `!setadmin [userID]`     | Cấp quyền Admin cho người dùng                                |
-| `!listsubscribers`       | Hiển thị danh sách người dùng đã đăng ký nhận thông báo       |
+| Lệnh                | Mô tả |
+|---------------------|---------------------------------------------------------------|
+| `!setadmin @[User]` | Cấp quyền Admin cho người dùng |
+| `!listsubscribers`  | Hiển thị danh sách người dùng đã đăng ký nhận thông báo |
 
 ### Quyền Admin
 Người dùng có quyền Admin có thể:
@@ -162,7 +104,6 @@ Người dùng có quyền Admin có thể:
 - Để cấp quyền Admin (nếu bạn là Admin): `!setadmin @{user} true`
 - Để xóa quyền Admin (nếu bạn là Admin): `!setadmin @{user} false`
 
-
 ### Chức năng phân tích hình ảnh
 Bot có khả năng phân tích hình ảnh kết hợp với văn bản:
 1. Sử dụng lệnh `!ask` cùng với câu hỏi của bạn
@@ -173,3 +114,4 @@ Bot có khả năng phân tích hình ảnh kết hợp với văn bản:
 - Nếu gặp vấn đề với lệnh tìm kiếm, hãy thông báo cho quản trị viên để kiểm tra cấu hình API
 - Nếu bot không phản hồi, hãy kiểm tra xem bot có trực tuyến hay không
 - Đảm bảo bot có đủ quyền để đọc và gửi tin nhắn trong kênh bạn đang sử dụng
+

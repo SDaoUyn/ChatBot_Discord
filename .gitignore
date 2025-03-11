@@ -1,0 +1,47 @@
+# Environment variables
+.env
+
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Binaries
+main
+
+# Binary build folder
+bin/
+build/
+
+# Test binaries
+*.test
+*.tmp
+
+# Coverage files
+*.out
+*.cover
+
+# Dependency directories
+vendor/
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Log files
+*.log
+
+# Docker volumes
+data/
+postgres_data/
+
+# macOS files
+.DS_Store
+
+# Temporary files
+tmp/
+temp/

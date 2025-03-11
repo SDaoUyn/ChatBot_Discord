@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var SerpAPIKey string = "YOUR_SERP_API_KEY"
+var SerpAPIKey string = getEnv("YOUR_SERP_API_KEY", "")
 
 func SearchGoogle(query string) (string, error) {
 	// Định dạng URL tìm kiếm đang sử dụng SerpAPI hoặc có thể s dụng dịch vụ tương tự
