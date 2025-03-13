@@ -6,14 +6,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 )
 
-var SerpAPIKey string = getEnv("YOUR_SERP_API_KEY", "")
+var SerpAPIKey string = ""
 
 func SearchGoogle(query string) (string, error) {
-	// Định dạng URL tìm kiếm đang sử dụng SerpAPI hoặc có thể s dụng dịch vụ tương tự
-	// Lưu ý: Để sử dụng SerpAPI thực tế, bạn cần đăng ký API key tại https://serpapi.com/
+	SerpAPIKey := os.Getenv("SERP_API_KEY")
 	searchURL := "https://serpapi.com/search.json?q=" + url.QueryEscape(query) + "&api_key=" + SerpAPIKey
 
 	// Gửi yêu cầu HTTP GET

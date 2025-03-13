@@ -16,16 +16,7 @@ import (
 )
 
 // Token Bot Discord của bạn
-var Token string = getEnv("YOUR_TOKEN", "")
-
-// getEnv lấy giá trị từ biến môi trường hoặc trả về giá trị mặc định
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
+var Token string = ""
 
 func main() {
 	// Khởi tạo kết nối database
@@ -37,6 +28,7 @@ func main() {
 	defer db.CloseDB()
 
 	// Tạo một session Discord mới
+	Token := os.Getenv("TOKEN_DISCORD")
 	dg, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		fmt.Println("Lỗi khi tạo session Discord:", err)

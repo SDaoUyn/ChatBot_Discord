@@ -10,19 +10,11 @@ import (
 	"path/filepath"
 )
 
-var GeminiKey string = getEnv("GEMINI_KEY", "")
-
-// getEnv lấy giá trị từ biến môi trường hoặc trả về giá trị mặc định
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
+var GeminiKey string = ""
 
 func AskGemini(question string) (string, error) {
 	// Tạo client với API key
+	GeminiKey := os.Getenv("GEMINI_KEY")
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(GeminiKey))
 	if err != nil {
